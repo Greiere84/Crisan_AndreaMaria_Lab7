@@ -24,7 +24,7 @@ namespace Crisan_AndreaMaria_Lab7
         }
     }
     //validator pentru lungime minima a string-ului
-    public class StringMinLengthValid : ValidationRule
+    public class StringMinLengthValidator : ValidationRule
     {
         public override ValidationResult Validate(object value,
         System.Globalization.CultureInfo cultureinfo)

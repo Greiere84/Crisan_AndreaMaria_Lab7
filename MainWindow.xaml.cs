@@ -23,17 +23,18 @@ namespace Crisan_AndreaMaria_Lab7
     /// </summary>
     enum ActionState
     {
-        New, Edit, Delete, Nothing
+        New,
+        Edit,
+        Delete,
+        Nothing
     }
     public partial class MainWindow : Window
     {
-        //using AutoLotModel;
         ActionState action = ActionState.Nothing;
         AutoLotEntitiesModel ctx = new AutoLotEntitiesModel();
         CollectionViewSource customerViewSource;
         CollectionViewSource inventoryViewSource;
         CollectionViewSource customerOrdersViewSource;
-
         public MainWindow()
         {
             InitializeComponent();
@@ -42,49 +43,98 @@ namespace Crisan_AndreaMaria_Lab7
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-
-            //using System.Data.Entity; 
-            customerViewSource = ((System.Windows.Data.CollectionViewSource)(this.FindResource("customerViewSource")));
+            //using System.Data.Entity;
+            customerViewSource =
+           ((System.Windows.Data.CollectionViewSource)(this.FindResource("customerViewSource")));
             customerViewSource.Source = ctx.Customers.Local;
+            ctx.Customers.Load();
             inventoryViewSource = ((System.Windows.Data.CollectionViewSource)(this.FindResource("inventoryViewSource")));
             inventoryViewSource.Source = ctx.Inventories.Local;
+            ctx.Inventories.Load();
+
             customerOrdersViewSource = ((System.Windows.Data.CollectionViewSource)(this.FindResource("customerOrdersViewSource")));
-            customerOrdersViewSource.Source = ctx.Orders.Local;
+            //customerOrdersViewSource.Source = ctx.Orders.Local;
+            ctx.Orders.Load();
+
+            cmbCustomers.ItemsSource = ctx.Customers.Local;
+            //cmbCustomers.DisplayMemberPath = "FirstName";
+            cmbCustomers.SelectedValuePath = "CustId";
+            cmbInventory.ItemsSource = ctx.Inventories.Local;
+            //cmbInventory.DisplayMemberPath = "Make";
+            cmbInventory.SelectedValuePath = "CarId";
 
             BindDataGrid();
-
-            ctx.Customers.Load();
-            ctx.Orders.Load();
-            ctx.Customers.Load();
-
-            cmbCustomers.ItemsSource = ctx.Customers.Local; 
-            //cmbCustomers.DisplayMemberPath = "FirstName"; 
-            cmbCustomers.SelectedValuePath = "CustId";
-
-            cmbInventory.ItemsSource = ctx.Inventories.Local; 
-            //cmbInventory.DisplayMemberPath = "Make"; 
-            cmbInventory.SelectedValuePath = "CarId";
         }
-        private void BindDataGrid()
+
+        //Customers
+        private void btnNew_Click(object sender, RoutedEventArgs e)
         {
-            var queryOrder = from ord in ctx.Orders
-                             join cust in ctx.Customers on ord.CustId equals
-                             cust.CustId
-                             join inv in ctx.Inventories on ord.CarId
-                 equals inv.CarId
-                             select new
-                             {
-                                 ord.OrderId,
-                                 ord.CarId,
-                                 ord.CustId,
-                                 cust.FirstName,
-                                 cust.LastName,
-                                 inv.Make,
-                                 inv.Color
-                             };
-            customerOrdersViewSource.Source = queryOrder.ToList();
-        }
+            action = ActionState.New;
+            btnNew.IsEnabled = false;
+            btnEdit.IsEnabled = false;
+            btnDelete.IsEnabled = false;
 
+            btnSave.IsEnabled = true;
+            btnCancel.IsEnabled = true;
+            btnPrev.IsEnabled = false;
+            btnNext.IsEnabled = false;
+            firstNameTextBox.IsEnabled = true;
+            lastNameTextBox.IsEnabled = true;
+            BindingOperations.ClearBinding(firstNameTextBox, TextBox.TextProperty);
+            BindingOperations.ClearBinding(lastNameTextBox, TextBox.TextProperty);
+            firstNameTextBox.Text = "";
+            lastNameTextBox.Text = "";
+            Keyboard.Focus(firstNameTextBox);
+        }
+        private void btnEdit_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.Edit;
+            string tempFirstName = firstNameTextBox.Text.ToString();
+            string tempLastName = lastNameTextBox.Text.ToString();
+            btnNew.IsEnabled = false;
+            btnEdit.IsEnabled = false;
+            btnDelete.IsEnabled = false;
+            btnSave.IsEnabled = true;
+            btnCancel.IsEnabled = true;
+            btnPrev.IsEnabled = false;
+            btnNext.IsEnabled = false;
+            firstNameTextBox.IsEnabled = true;
+            lastNameTextBox.IsEnabled = true;
+            BindingOperations.ClearBinding(firstNameTextBox, TextBox.TextProperty);
+            BindingOperations.ClearBinding(lastNameTextBox, TextBox.TextProperty);
+            firstNameTextBox.Text = tempFirstName;
+            lastNameTextBox.Text = tempLastName;
+            Keyboard.Focus(firstNameTextBox);
+        }
+        private void btnDelete_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.Delete;
+            string tempFirstName = firstNameTextBox.Text.ToString();
+            string tempLastName = lastNameTextBox.Text.ToString();
+            btnNew.IsEnabled = false;
+            btnEdit.IsEnabled = false;
+            btnDelete.IsEnabled = false;
+            btnSave.IsEnabled = true;
+            btnCancel.IsEnabled = true;
+            btnPrev.IsEnabled = false;
+            btnNext.IsEnabled = false;
+            BindingOperations.ClearBinding(firstNameTextBox, TextBox.TextProperty);
+            BindingOperations.ClearBinding(lastNameTextBox, TextBox.TextProperty);
+            firstNameTextBox.Text = tempFirstName;
+            lastNameTextBox.Text = tempLastName;
+        }
+        private void btnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.Nothing;
+            btnNew.IsEnabled = true;
+            btnEdit.IsEnabled = true;
+            btnSave.IsEnabled = false;
+            btnCancel.IsEnabled = false;
+            btnPrev.IsEnabled = true;
+            btnNext.IsEnabled = true;
+            firstNameTextBox.IsEnabled = false;
+            lastNameTextBox.IsEnabled = false;
+        }
         private void btnSave_Click(object sender, RoutedEventArgs e)
         {
             Customer customer = null;
@@ -92,32 +142,42 @@ namespace Crisan_AndreaMaria_Lab7
             {
                 try
                 {
-                    //instantiem Customer entity 
+                    //instantiem Customer entity
                     customer = new Customer()
                     {
                         FirstName = firstNameTextBox.Text.Trim(),
                         LastName = lastNameTextBox.Text.Trim()
                     };
-                    //adaugam entitatea nou creata in context 
+                    SetValidationBinding();
+                    //adaugam entitatea nou creata in context
                     ctx.Customers.Add(customer);
                     customerViewSource.View.Refresh();
-                    //salvam modificarile 
+                    //salvam modificarile
                     ctx.SaveChanges();
+
                 }
-                //using System.Data;
                 catch (DataException ex)
                 {
                     MessageBox.Show(ex.Message);
                 }
+                btnNew.IsEnabled = true;
+                btnEdit.IsEnabled = true;
+                btnSave.IsEnabled = false;
+                btnCancel.IsEnabled = false;
+                btnDelete.IsEnabled = true;
+                btnPrev.IsEnabled = true;
+                btnNext.IsEnabled = true;
+                firstNameTextBox.IsEnabled = false;
+                lastNameTextBox.IsEnabled = false;
             }
-            else
-                if (action == ActionState.Edit)
+            else if (action == ActionState.Edit)
             {
                 try
                 {
                     customer = (Customer)customerDataGrid.SelectedItem;
                     customer.FirstName = firstNameTextBox.Text.Trim();
                     customer.LastName = lastNameTextBox.Text.Trim();
+                    SetValidationBinding();
                     //salvam modificarile
                     ctx.SaveChanges();
                 }
@@ -125,10 +185,18 @@ namespace Crisan_AndreaMaria_Lab7
                 {
                     MessageBox.Show(ex.Message);
                 }
-
                 customerViewSource.View.Refresh();
-                // pozitionarea pe item-ul curent 
+                // pozitionarea pe item-ul curent
                 customerViewSource.View.MoveCurrentTo(customer);
+                btnNew.IsEnabled = true;
+                btnEdit.IsEnabled = true;
+                btnSave.IsEnabled = false;
+                btnCancel.IsEnabled = false;
+                btnDelete.IsEnabled = true;
+                btnPrev.IsEnabled = true;
+                btnNext.IsEnabled = true;
+                firstNameTextBox.IsEnabled = false;
+                lastNameTextBox.IsEnabled = false;
             }
             else if (action == ActionState.Delete)
             {
@@ -143,13 +211,15 @@ namespace Crisan_AndreaMaria_Lab7
                     MessageBox.Show(ex.Message);
                 }
                 customerViewSource.View.Refresh();
+                btnNew.IsEnabled = true;
+                btnEdit.IsEnabled = true;
+                btnSave.IsEnabled = false;
+                btnCancel.IsEnabled = false;
+                btnPrev.IsEnabled = true;
+                btnNext.IsEnabled = true;
+                firstNameTextBox.IsEnabled = false;
+                lastNameTextBox.IsEnabled = false;
             }
-            SetValidationBinding();
-        }
-
-        private void btnPrev_Click(object sender, RoutedEventArgs e)
-        {
-            customerViewSource.View.MoveCurrentToPrevious();
         }
 
         private void btnNext_Click(object sender, RoutedEventArgs e)
@@ -157,39 +227,121 @@ namespace Crisan_AndreaMaria_Lab7
             customerViewSource.View.MoveCurrentToNext();
         }
 
-        private void btnSave1_Click(object sender, RoutedEventArgs e)
+        private void btnPrev_Click(object sender, RoutedEventArgs e)
+        {
+            customerViewSource.View.MoveCurrentToPrevious();
+        }
+
+        //Inventory
+        private void btnNewI_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.New;
+            btnNewI.IsEnabled = false;
+            btnEditI.IsEnabled = false;
+            btnDeleteI.IsEnabled = false;
+
+            btnSaveI.IsEnabled = true;
+            btnCancelI.IsEnabled = true;
+            btnPrevI.IsEnabled = false;
+            btnNextI.IsEnabled = false;
+            colorTextBox.IsEnabled = true;
+            makeTextBox.IsEnabled = true;
+            BindingOperations.ClearBinding(colorTextBox, TextBox.TextProperty);
+            BindingOperations.ClearBinding(makeTextBox, TextBox.TextProperty);
+            colorTextBox.Text = "";
+            makeTextBox.Text = "";
+            Keyboard.Focus(colorTextBox);
+        }
+        private void btnEditI_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.Edit;
+            string tempColor = colorTextBox.Text.ToString();
+            string tempMake = makeTextBox.Text.ToString();
+            btnNewI.IsEnabled = false;
+            btnEditI.IsEnabled = false;
+            btnDeleteI.IsEnabled = false;
+            btnSaveI.IsEnabled = true;
+            btnCancelI.IsEnabled = true;
+            btnPrevI.IsEnabled = false;
+            btnNextI.IsEnabled = false;
+            colorTextBox.IsEnabled = true;
+            makeTextBox.IsEnabled = true;
+            BindingOperations.ClearBinding(colorTextBox, TextBox.TextProperty);
+            BindingOperations.ClearBinding(makeTextBox, TextBox.TextProperty);
+            colorTextBox.Text = tempColor;
+            makeTextBox.Text = tempMake;
+            Keyboard.Focus(colorTextBox);
+        }
+        private void btnDeleteI_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.Delete;
+            string tempColor = colorTextBox.Text.ToString();
+            string tempMake = makeTextBox.Text.ToString();
+            btnNewI.IsEnabled = false;
+            btnEditI.IsEnabled = false;
+            btnDeleteI.IsEnabled = false;
+            btnSaveI.IsEnabled = true;
+            btnCancelI.IsEnabled = true;
+            btnPrevI.IsEnabled = false;
+            btnNextI.IsEnabled = false;
+            BindingOperations.ClearBinding(colorTextBox, TextBox.TextProperty);
+            BindingOperations.ClearBinding(makeTextBox, TextBox.TextProperty);
+            colorTextBox.Text = tempColor;
+            makeTextBox.Text = tempMake;
+        }
+        private void btnCancelI_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.Nothing;
+            btnNewI.IsEnabled = true;
+            btnEditI.IsEnabled = true;
+            btnSaveI.IsEnabled = false;
+            btnCancelI.IsEnabled = false;
+            btnPrevI.IsEnabled = true;
+            btnNextI.IsEnabled = true;
+            colorTextBox.IsEnabled = false;
+            makeTextBox.IsEnabled = false;
+        }
+        private void btnSaveI_Click(object sender, RoutedEventArgs e)
         {
             Inventory inventory = null;
             if (action == ActionState.New)
             {
                 try
                 {
-                    //instantiem Inventory entity 
+                    //instantiem Inventory entity
                     inventory = new Inventory()
                     {
-                        Make = makeTextBox.Text.Trim(),
-                        Color = colorTextBox.Text.Trim()
+                        Color = colorTextBox.Text.Trim(),
+                        Make = makeTextBox.Text.Trim()
                     };
-                    //adaugam entitatea nou creata in context 
+                    //adaugam entitatea nou creata in context
                     ctx.Inventories.Add(inventory);
-                    inventoryViewSource.View.Refresh();
-                    //salvam modificarile 
+                    customerViewSource.View.Refresh();
+                    //salvam modificarile
                     ctx.SaveChanges();
+
                 }
-                //using System.Data;
                 catch (DataException ex)
                 {
                     MessageBox.Show(ex.Message);
                 }
+                btnNewI.IsEnabled = true;
+                btnEditI.IsEnabled = true;
+                btnSaveI.IsEnabled = false;
+                btnCancelI.IsEnabled = false;
+                btnDeleteI.IsEnabled = true;
+                btnPrevI.IsEnabled = true;
+                btnNextI.IsEnabled = true;
+                colorTextBox.IsEnabled = false;
+                makeTextBox.IsEnabled = false;
             }
-            else
-                if (action == ActionState.Edit)
+            else if (action == ActionState.Edit)
             {
                 try
                 {
                     inventory = (Inventory)inventoryDataGrid.SelectedItem;
-                    inventory.Make = makeTextBox.Text.Trim();
                     inventory.Color = colorTextBox.Text.Trim();
+                    inventory.Make = makeTextBox.Text.Trim();
                     //salvam modificarile
                     ctx.SaveChanges();
                 }
@@ -197,10 +349,18 @@ namespace Crisan_AndreaMaria_Lab7
                 {
                     MessageBox.Show(ex.Message);
                 }
-
                 inventoryViewSource.View.Refresh();
-                // pozitionarea pe item-ul curent 
+                // pozitionarea pe item-ul curent
                 inventoryViewSource.View.MoveCurrentTo(inventory);
+                btnNewI.IsEnabled = true;
+                btnEditI.IsEnabled = true;
+                btnSaveI.IsEnabled = false;
+                btnCancelI.IsEnabled = false;
+                btnDeleteI.IsEnabled = true;
+                btnPrevI.IsEnabled = true;
+                btnNextI.IsEnabled = true;
+                colorTextBox.IsEnabled = false;
+                makeTextBox.IsEnabled = false;
             }
             else if (action == ActionState.Delete)
             {
@@ -215,21 +375,29 @@ namespace Crisan_AndreaMaria_Lab7
                     MessageBox.Show(ex.Message);
                 }
                 inventoryViewSource.View.Refresh();
+                btnNewI.IsEnabled = true;
+                btnEditI.IsEnabled = true;
+                btnSaveI.IsEnabled = false;
+                btnCancelI.IsEnabled = false;
+                btnPrevI.IsEnabled = true;
+                btnNextI.IsEnabled = true;
+                colorTextBox.IsEnabled = false;
+                makeTextBox.IsEnabled = false;
             }
-            SetValidationBinding();
         }
 
-        private void btnNext1_Click(object sender, RoutedEventArgs e)
+        private void btnNextI_Click(object sender, RoutedEventArgs e)
         {
             inventoryViewSource.View.MoveCurrentToNext();
         }
 
-        private void btnPrevious_Click(object sender, RoutedEventArgs e)
+        private void btnPrevI_Click(object sender, RoutedEventArgs e)
         {
             inventoryViewSource.View.MoveCurrentToPrevious();
         }
 
-        private void btnSave2_Click(object sender, RoutedEventArgs e)
+        //Orders
+        private void btnSaveO_Click(object sender, RoutedEventArgs e)
         {
             Order order = null;
             if (action == ActionState.New)
@@ -238,28 +406,33 @@ namespace Crisan_AndreaMaria_Lab7
                 {
                     Customer customer = (Customer)cmbCustomers.SelectedItem;
                     Inventory inventory = (Inventory)cmbInventory.SelectedItem;
-
-                    //instantiem Order entity 
+                    //instantiem Order entity
                     order = new Order()
                     {
+
                         CustId = customer.CustId,
                         CarId = inventory.CarId
                     };
-
-                    //adaugam entitatea nou creata in context 
+                    //adaugam entitatea nou creata in context
                     ctx.Orders.Add(order);
                     customerOrdersViewSource.View.Refresh();
-
                     //salvam modificarile
                     ctx.SaveChanges();
+
                 }
                 catch (DataException ex)
                 {
                     MessageBox.Show(ex.Message);
                 }
+                btnNew.IsEnabled = true;
+                btnEdit.IsEnabled = true;
+                btnSave.IsEnabled = false;
+                btnCancel.IsEnabled = false;
+                btnDelete.IsEnabled = true;
+                btnPrev.IsEnabled = true;
+                btnNext.IsEnabled = true;
             }
-            else
-                if (action == ActionState.Edit)
+            else if (action == ActionState.Edit)
             {
                 dynamic selectedOrder = ordersDataGrid.SelectedItem;
                 try
@@ -302,31 +475,35 @@ namespace Crisan_AndreaMaria_Lab7
                     MessageBox.Show(ex.Message);
                 }
             }
-            SetValidationBinding();
         }
 
-        private void btnEdit2_Click(object sender, RoutedEventArgs e)
+        private void btnNextO_Click(object sender, RoutedEventArgs e)
         {
-            action = ActionState.Edit;
-            BindingOperations.ClearBinding(firstNameTextBox, TextBox.TextProperty);
-            BindingOperations.ClearBinding(lastNameTextBox, TextBox.TextProperty);
-            SetValidationBinding();
+            customerOrdersViewSource.View.MoveCurrentToNext();
         }
 
-        private void btnEdit1_Click(object sender, RoutedEventArgs e)
+        private void btnPrevO_Click(object sender, RoutedEventArgs e)
         {
-            action = ActionState.Edit;
-            BindingOperations.ClearBinding(makeTextBox, TextBox.TextProperty);
-            BindingOperations.ClearBinding(colorTextBox, TextBox.TextProperty);
-            SetValidationBinding();
+            customerOrdersViewSource.View.MoveCurrentToPrevious();
         }
-
-        private void btnEdit_Click(object sender, RoutedEventArgs e)
+        private void BindDataGrid()
         {
-            action = ActionState.Edit;
-            BindingOperations.ClearBinding(firstNameTextBox, TextBox.TextProperty);
-            BindingOperations.ClearBinding(lastNameTextBox, TextBox.TextProperty);
-            SetValidationBinding();
+            var queryOrder = from ord in ctx.Orders
+                             join cust in ctx.Customers on ord.CustId equals
+                             cust.CustId
+                             join inv in ctx.Inventories on ord.CarId
+                 equals inv.CarId
+                             select new
+                             {
+                                 ord.OrderId,
+                                 ord.CarId,
+                                 ord.CustId,
+                                 cust.FirstName,
+                                 cust.LastName,
+                                 inv.Make,
+                                 inv.Color
+                             };
+            customerOrdersViewSource.Source = queryOrder.ToList();
         }
         private void SetValidationBinding()
         {
@@ -335,19 +512,23 @@ namespace Crisan_AndreaMaria_Lab7
             firstNameValidationBinding.Path = new PropertyPath("FirstName");
             firstNameValidationBinding.NotifyOnValidationError = true;
             firstNameValidationBinding.Mode = BindingMode.TwoWay;
-            firstNameValidationBinding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+            firstNameValidationBinding.UpdateSourceTrigger =
+           UpdateSourceTrigger.PropertyChanged;
             //string required
             firstNameValidationBinding.ValidationRules.Add(new StringNotEmpty());
-            firstNameTextBox.SetBinding(TextBox.TextProperty, firstNameValidationBinding);
+            firstNameTextBox.SetBinding(TextBox.TextProperty,
+           firstNameValidationBinding);
             Binding lastNameValidationBinding = new Binding();
             lastNameValidationBinding.Source = customerViewSource;
             lastNameValidationBinding.Path = new PropertyPath("LastName");
             lastNameValidationBinding.NotifyOnValidationError = true;
             lastNameValidationBinding.Mode = BindingMode.TwoWay;
-            lastNameValidationBinding.UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged;
+            lastNameValidationBinding.UpdateSourceTrigger =
+           UpdateSourceTrigger.PropertyChanged;
             //string min length validator
-            lastNameValidationBinding.ValidationRules.Add(new StringMinLengthValid());
-            lastNameTextBox.SetBinding(TextBox.TextProperty, lastNameValidationBinding); //setare binding nou
+            lastNameValidationBinding.ValidationRules.Add(new StringMinLengthValidator());
+            lastNameTextBox.SetBinding(TextBox.TextProperty,
+           lastNameValidationBinding); //setare binding nou
         }
     }
 }
