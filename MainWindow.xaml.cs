@@ -53,7 +53,7 @@ namespace Crisan_AndreaMaria_Lab7
             ctx.Inventories.Load();
 
             customerOrdersViewSource = ((System.Windows.Data.CollectionViewSource)(this.FindResource("customerOrdersViewSource")));
-            //customerOrdersViewSource.Source = ctx.Orders.Local;
+            customerOrdersViewSource.Source = ctx.Orders.Local;
             ctx.Orders.Load();
 
             cmbCustomers.ItemsSource = ctx.Customers.Local;
@@ -102,6 +102,7 @@ namespace Crisan_AndreaMaria_Lab7
             lastNameTextBox.IsEnabled = true;
             BindingOperations.ClearBinding(firstNameTextBox, TextBox.TextProperty);
             BindingOperations.ClearBinding(lastNameTextBox, TextBox.TextProperty);
+            SetValidationBinding();
             firstNameTextBox.Text = tempFirstName;
             lastNameTextBox.Text = tempLastName;
             Keyboard.Focus(firstNameTextBox);
@@ -132,6 +133,7 @@ namespace Crisan_AndreaMaria_Lab7
             btnCancel.IsEnabled = false;
             btnPrev.IsEnabled = true;
             btnNext.IsEnabled = true;
+            btnDeleteO.IsEnabled = true;
             firstNameTextBox.IsEnabled = false;
             lastNameTextBox.IsEnabled = false;
         }
@@ -177,7 +179,6 @@ namespace Crisan_AndreaMaria_Lab7
                     customer = (Customer)customerDataGrid.SelectedItem;
                     customer.FirstName = firstNameTextBox.Text.Trim();
                     customer.LastName = lastNameTextBox.Text.Trim();
-                    SetValidationBinding();
                     //salvam modificarile
                     ctx.SaveChanges();
                 }
@@ -298,6 +299,7 @@ namespace Crisan_AndreaMaria_Lab7
             btnCancelI.IsEnabled = false;
             btnPrevI.IsEnabled = true;
             btnNextI.IsEnabled = true;
+            btnDeleteO.IsEnabled = true;
             colorTextBox.IsEnabled = false;
             makeTextBox.IsEnabled = false;
         }
@@ -316,7 +318,7 @@ namespace Crisan_AndreaMaria_Lab7
                     };
                     //adaugam entitatea nou creata in context
                     ctx.Inventories.Add(inventory);
-                    customerViewSource.View.Refresh();
+                    inventoryViewSource.View.Refresh();
                     //salvam modificarile
                     ctx.SaveChanges();
 
@@ -397,6 +399,40 @@ namespace Crisan_AndreaMaria_Lab7
         }
 
         //Orders
+        private void btnNewO_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.New;
+            btnNewO.IsEnabled = false;
+            btnEditO.IsEnabled = false;
+            btnDeleteO.IsEnabled = false;
+            btnSaveO.IsEnabled = true;
+            btnCancelO.IsEnabled = true;
+            btnPrevO.IsEnabled = false;
+            btnNextO.IsEnabled = false;
+        }
+        private void btnEditO_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.Edit;
+            btnNewO.IsEnabled = false;
+            btnEditO.IsEnabled = false;
+            btnDeleteO.IsEnabled = false;
+            btnSaveO.IsEnabled = true;
+            btnCancelO.IsEnabled = true;
+            btnPrevO.IsEnabled = false;
+            btnNextO.IsEnabled = false;
+
+        }
+        private void btnDeleteO_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.Delete;
+            btnNewO.IsEnabled = false;
+            btnEditO.IsEnabled = false;
+            btnDeleteO.IsEnabled = false;
+            btnSaveO.IsEnabled = true;
+            btnCancelO.IsEnabled = true;
+            btnPrevO.IsEnabled = false;
+            btnNextO.IsEnabled = false;
+        }
         private void btnSaveO_Click(object sender, RoutedEventArgs e)
         {
             Order order = null;
@@ -424,13 +460,14 @@ namespace Crisan_AndreaMaria_Lab7
                 {
                     MessageBox.Show(ex.Message);
                 }
-                btnNew.IsEnabled = true;
-                btnEdit.IsEnabled = true;
-                btnSave.IsEnabled = false;
-                btnCancel.IsEnabled = false;
-                btnDelete.IsEnabled = true;
-                btnPrev.IsEnabled = true;
-                btnNext.IsEnabled = true;
+                BindDataGrid();
+                btnNewO.IsEnabled = true;
+                btnEditO.IsEnabled = true;
+                btnSaveO.IsEnabled = false;
+                btnCancelO.IsEnabled = false;
+                btnDeleteO.IsEnabled = true;
+                btnPrevO.IsEnabled = true;
+                btnNextO.IsEnabled = true;
             }
             else if (action == ActionState.Edit)
             {
@@ -476,7 +513,17 @@ namespace Crisan_AndreaMaria_Lab7
                 }
             }
         }
-
+        private void btnCancelO_Click(object sender, RoutedEventArgs e)
+        {
+            action = ActionState.Nothing;
+            btnNewO.IsEnabled = true;
+            btnEditO.IsEnabled = true;
+            btnSaveO.IsEnabled = false;
+            btnCancelO.IsEnabled = false;
+            btnPrevO.IsEnabled = true;
+            btnNextO.IsEnabled = true;
+            btnDeleteO.IsEnabled = true;
+        }
         private void btnNextO_Click(object sender, RoutedEventArgs e)
         {
             customerOrdersViewSource.View.MoveCurrentToNext();
